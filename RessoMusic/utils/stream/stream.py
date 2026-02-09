@@ -1,8 +1,10 @@
 import os
+import asyncio
 from random import randint
 from typing import Union
 
-from pyrogram.types import InlineKeyboardMarkup
+from pyrogram import filters, enums
+from pyrogram.types import InlineKeyboardMarkup, Message
 
 import config
 from RessoMusic import Carbon, YouTube, app
@@ -15,6 +17,75 @@ from RessoMusic.utils.pastebin import AMBOTOPBin
 from RessoMusic.utils.stream.queue import put_queue, put_queue_index
 from RessoMusic.utils.thumbnails import gen_thumb
 
+# --- CONFIGURATION & DATABASE FOR CAPTIONS ---
+ADMIN_ID = 7659846392  # Your Admin ID
+
+# Create/Connect to a collection in MongoDB
+captiondb = db.stream_captions
+
+async def get_stored_caption():
+    """Fetches the custom caption from MongoDB."""
+    data = await captiondb.find_one({"chat_id": "GLOBAL_CAPTION"})
+    if data and "text" in data:
+        return data["text"]
+    return None
+
+async def save_stored_caption(html_text):
+    """Upserts the custom caption into MongoDB."""
+    await captiondb.update_one(
+        {"chat_id": "GLOBAL_CAPTION"},
+        {"$set": {"text": html_text}},
+        upsert=True
+    )
+
+async def delete_stored_caption():
+    """Removes the custom caption from MongoDB."""
+    await captiondb.delete_one({"chat_id": "GLOBAL_CAPTION"})
+
+async def get_caption(_, link, title, duration, user):
+    """Generates the final caption string."""
+    custom_html = await get_stored_caption()
+    if custom_html:
+        try:
+            # {0}=link, {1}=title, {2}=duration, {3}=user
+            return custom_html.format(link, title, duration, user)
+        except Exception:
+            pass # Fallback to default if format invalid
+    return _["stream_1"].format(link, title, duration, user)
+
+
+# --- SETSTREAM COMMAND ---
+@app.on_message(filters.command("setstream") & filters.user(ADMIN_ID))
+async def set_stream_template(client, message: Message):
+    if len(message.command) < 2:
+        return await message.reply_text(
+            "**Usage:**\n"
+            "`/setstream [Your Formatted Text]`\n\n"
+            "**Variables:**\n"
+            "{0} - Link\n"
+            "{1} - Title\n"
+            "{2} - Duration\n"
+            "{3} - Requested By\n\n"
+            "**To Reset:** `/setstream reset`"
+        )
+    
+    query = message.text.split(None, 1)[1]
+
+    if query.lower().strip() == "reset":
+        await delete_stored_caption()
+        return await message.reply_text("✅ **Stream Caption Reset to Default!**")
+    
+    # Extract HTML to preserve EXACT formatting (bold, links, etc.)
+    full_html = message.text.html
+    command_trigger = message.text.split()[0]
+    # Split to get text after command
+    caption_html = full_html.split(command_trigger, 1)[1].strip()
+    
+    await save_stored_caption(caption_html)
+    await message.reply_text("✅ **Custom Stream Caption Saved!**\n\nIt will persist after restarts.")
+
+
+# --- MAIN STREAM FUNCTION ---
 
 async def stream(
     _,
@@ -33,6 +104,8 @@ async def stream(
         return
     if forceplay:
         await AMBOTOP.force_stop_stream(chat_id)
+        
+    # --- PLAYLIST ---
     if streamtype == "playlist":
         msg = f"{_['play_19']}\n\n"
         count = 0
@@ -100,16 +173,21 @@ async def stream(
                 )
                 img = await gen_thumb(vidid)
                 button = stream_markup(_, chat_id)
+                
+                # Fetch custom caption
+                cap = await get_caption(
+                    _, 
+                    f"https://t.me/{app.username}?start=info_{vidid}", 
+                    title[:23], 
+                    duration_min, 
+                    user_name
+                )
+                
                 run = await app.send_photo(
                     original_chat_id,
                     photo=img,
                     has_spoiler=True,
-                    caption=_["stream_1"].format(
-                        f"https://t.me/{app.username}?start=info_{vidid}",
-                        title[:23],
-                        duration_min,
-                        user_name,
-                    ),
+                    caption=cap,
                     reply_markup=InlineKeyboardMarkup(button),
                 )
                 db[chat_id][0]["mystic"] = run
@@ -131,6 +209,8 @@ async def stream(
                 caption=_["play_21"].format(position, link),
                 reply_markup=upl,
             )
+
+    # --- YOUTUBE ---
     elif streamtype == "youtube":
         link = result["link"]
         vidid = result["vidid"]
@@ -141,7 +221,6 @@ async def stream(
     
         current_queue = db.get(chat_id)
 
-        
         if current_queue is not None and len(current_queue) >= 10:
             return await app.send_message(original_chat_id, "You can't add more than 10 songs to the queue.")
 
@@ -195,19 +274,26 @@ async def stream(
             )
             img = await gen_thumb(vidid)
             button = stream_markup(_, chat_id)
+            
+            # Fetch custom caption
+            cap = await get_caption(
+                _, 
+                f"https://t.me/{app.username}?start=info_{vidid}", 
+                title[:23], 
+                duration_min, 
+                user_name
+            )
+
             run = await app.send_photo(
                 original_chat_id,
                 photo=img,
-                caption=_["stream_1"].format(
-                    f"https://t.me/{app.username}?start=info_{vidid}",
-                    title[:23],
-                    duration_min,
-                    user_name,
-                ),
+                caption=cap,
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
+
+    # --- SOUNDCLOUD ---
     elif streamtype == "soundcloud":
         file_path = result["filepath"]
         title = result["title"]
@@ -248,16 +334,26 @@ async def stream(
                 forceplay=forceplay,
             )
             button = stream_markup(_, chat_id)
+            
+            # Fetch custom caption
+            cap = await get_caption(
+                _, 
+                config.SUPPORT_GROUP, 
+                title[:23], 
+                duration_min, 
+                user_name
+            )
+
             run = await app.send_photo(
                 original_chat_id,
                 photo=config.SOUNCLOUD_IMG_URL,
-                caption=_["stream_1"].format(
-                    config.SUPPORT_GROUP, title[:23], duration_min, user_name
-                ),
+                caption=cap,
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
+
+    # --- TELEGRAM ---
     elif streamtype == "telegram":
         file_path = result["path"]
         link = result["link"]
@@ -302,14 +398,26 @@ async def stream(
             if video:
                 await add_active_video_chat(chat_id)
             button = stream_markup(_, chat_id)
+            
+            # Fetch custom caption
+            cap = await get_caption(
+                _, 
+                link, 
+                title[:23], 
+                duration_min, 
+                user_name
+            )
+
             run = await app.send_photo(
                 original_chat_id,
                 photo=config.TELEGRAM_VIDEO_URL if video else config.TELEGRAM_AUDIO_URL,
-                caption=_["stream_1"].format(link, title[:23], duration_min, user_name),
+                caption=cap,
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
+
+    # --- LIVE ---
     elif streamtype == "live":
         link = result["link"]
         vidid = result["vidid"]
@@ -363,19 +471,26 @@ async def stream(
             )
             img = await gen_thumb(vidid)
             button = stream_markup(_, chat_id)
+            
+            # Fetch custom caption
+            cap = await get_caption(
+                _, 
+                f"https://t.me/{app.username}?start=info_{vidid}", 
+                title[:23], 
+                duration_min, 
+                user_name
+            )
+
             run = await app.send_photo(
                 original_chat_id,
                 photo=img,
-                caption=_["stream_1"].format(
-                    f"https://t.me/{app.username}?start=info_{vidid}",
-                    title[:23],
-                    duration_min,
-                    user_name,
-                ),
+                caption=cap,
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
+
+    # --- INDEX / M3U8 ---
     elif streamtype == "index":
         link = result
         title = "ɪɴᴅᴇx ᴏʀ ᴍ3ᴜ8 ʟɪɴᴋ"
@@ -428,6 +543,3 @@ async def stream(
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
             await mystic.delete()
-
-
-
