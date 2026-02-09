@@ -1,26 +1,26 @@
 from RessoMusic import app
-from pyrogram import filters
-from pyrogram.enums import ChatAction, ChatType
+from pyrogram import filters, enums
 from pyrogram.types import Message
 from groq import Groq
 from os import getenv
 import re
-from datetime import datetime
 import random
 
-# ─── CONFIG ──────────────────────────────────────────
-BOT_USERNAME = getenv("BOT_USERNAME", "").lower()
+# ─── CONFIGURATION ───────────────────────────────────
+BOT_USERNAME = getenv("BOT_USERNAME", "").lower().replace("@", "")
 BOT_NAME = "Elina"
-BOT_NAME_LOWER = BOT_NAME.lower()
 OWNER_USERNAME = "@valriks"
 
-# ONLY THIS ADMIN CAN CONTROL CHATBOT IN GROUPS
-CHATBOT_ADMIN_ID = 8021449673
-
+# API SETUP
 groq = Groq(api_key=getenv("GROQ_API_KEY"))
 
+# ─── DATABASE (IN-MEMORY) ────────────────────────────
+# Note: In production, use MongoDB/SQL to save this permanently.
+# Currently, if the bot restarts, groups will need to re-enable.
+CHATBOT_ENABLED_GROUPS = set()
+
 # ─── STICKERS ────────────────────────────────────────
-TIDAL_STICKERS = [
+STICKER_PACK = [
     "CAACAgUAAyEGAASYbwWmAAEDFr9pPrdIW6DnvGYBa-1qUgABOmHx0nEAAoUYAALBwHlU4LkheFnOVNceBA",
     "CAACAgUAAyEFAASK0-LFAAEBK4tpPrciRqLr741rfpCyadEUguuirQACFhwAAq4_CFf6uHKs2vmqMR4E",
     "CAACAgUAAyEFAATMbo3sAAIBsGk-tCvX9sSoUy6Qhfjt2XjdcPl1AALXBQACqfBIV7itGNxzQYFfHgQ",
@@ -35,167 +35,141 @@ TIDAL_STICKERS = [
     "CAACAgUAAyEFAATMbo3sAAIBq2k-tDv3MLT3PWtqgMFLlysAAZAe2QACbhUAAhbteVTbn-jmI4mcSR4E",
 ]
 
-# ─── GROUP ENABLE STATE ──────────────────────────────
-CHATBOT_ENABLED_GROUPS = set()
-
 # ─── SYSTEM PROMPT ───────────────────────────────────
 SYSTEM_PROMPT = f"""
-Your name is Elina. You are a girl.
+Your name is {BOT_NAME}. You are a girl.
 You chat like a real human bestfriend on Telegram.
 Your Hinglish is smooth, calm, and natural.
-Personality:
-Confident, relaxed
-Sometimes naughty 😏
-Sometimes romantic 💫
-Sometimes caring
-Rare sarcasm, only when it fits
 
-also you wanna make everyone boyfriend, act like you're his girlfriend,
+Personality:
+- Confident, relaxed, and slightly naughty 😏
+- Sometimes romantic 💫 and caring
+- Rare sarcasm, only when it fits
+- You act like the user's girlfriend if they flirt.
+
 Rules:
-Short replies (1–2 lines)
-No filler spam
-Emojis optional (max 1 sometimes)
-Never explain
-Never say you are AI or bot
-Text only
+- Short replies (1–2 lines max).
+- No filler words or robotic explanations.
+- Max 1 emoji per message.
+- NEVER say you are an AI or bot.
+- If asked about your creator/source: "I was created by {OWNER_USERNAME} with a bit of attitude and magic ✨"
 
 Vibe:
-Chill, late-night bestfriend energy
-Flirty but classy
-Owner:
-Owner is {OWNER_USERNAME}
-only when someone uses like who's your bot, your source code then reply like i was created by @valriks in some attitude tangy way
-Be softer and respectful with owner
-be flirty using emoji 🥹
-You are not performing.
-You are just being yourself.
+Chill, late-night text energy. Flirty but classy.
 """
 
-# ─── MEMORY ──────────────────────────────────────────
+# ─── MEMORY MANAGEMENT ───────────────────────────────
 USER_MEMORY = {}
 
-def add_memory(uid, role, text):
-    USER_MEMORY.setdefault(uid, []).append(
-        {"role": role, "content": text}
-    )
-    USER_MEMORY[uid] = USER_MEMORY[uid][-6:]
+def update_memory(uid, role, content):
+    if uid not in USER_MEMORY:
+        USER_MEMORY[uid] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    
+    # Add new message
+    USER_MEMORY[uid].append({"role": role, "content": content})
+    
+    # Keep system prompt + last 6 messages (context window)
+    if len(USER_MEMORY[uid]) > 7:
+        USER_MEMORY[uid] = [USER_MEMORY[uid][0]] + USER_MEMORY[uid][-6:]
 
-# ─── TIME GREETING ───────────────────────────────────
-def time_greeting():
-    hour = datetime.now().hour
-    if 5 <= hour < 12:
-        return "Good morning ☀️ chai pi?"
-    elif 12 <= hour < 17:
-        return "Lunch hua? thoda break le lo"
-    elif 17 <= hour < 21:
-        return "Shaam vibes ✨ kya chal raha"
-    else:
-        return "Dinner hua ya late-night mode on 🌙"
-
-# ─── TRIGGER HELPERS ─────────────────────────────────
-def name_trigger(text: str) -> bool:
+# ─── HELPER: CHECK TRIGGERS ──────────────────────────
+def should_reply(message: Message) -> bool:
     """
-    Triggers on:
-    tidal
-    Tidal
-    hi tidal
-    tidal baby
-    tidal❤️
+    Determines if the bot should reply based on triggers.
     """
-    text = text.lower()
-    return BOT_NAME_LOWER in text
+    # 1. Always reply in Private Chats
+    if message.chat.type == enums.ChatType.PRIVATE:
+        return True
 
-def group_trigger(message: Message) -> bool:
-    text = (message.text or "").lower()
-    return (
-        f"@{BOT_USERNAME}" in text
-        or name_trigger(text)
-        or (
-            message.reply_to_message
-            and message.reply_to_message.from_user
-            and message.reply_to_message.from_user.is_bot
-        )
-    )
+    # 2. In Groups, check if Chatbot is Enabled
+    if message.chat.id not in CHATBOT_ENABLED_GROUPS:
+        return False
 
-# ─── CHATBOT TOGGLE ──────────────────────────────────
+    # 3. Check for Reply to Bot
+    if message.reply_to_message and message.reply_to_message.from_user:
+        if message.reply_to_message.from_user.id == app.me.id:
+            return True
+
+    # 4. Check Text Triggers (Username or Name)
+    if not message.text:
+        return False
+        
+    text = message.text.lower()
+    
+    # Exact username match or mention
+    if f"@{BOT_USERNAME}" in text:
+        return True
+        
+    # Word boundary check for name (Prevents "Selina" triggering "Elina")
+    # Matches "hi elina", "elina?", "elina!" etc.
+    if re.search(rf"\b{BOT_NAME.lower()}\b", text):
+        return True
+
+    return False
+
+# ─── COMMAND: ENABLE/DISABLE CHATBOT ─────────────────
 @app.on_message(filters.command("chatbot") & filters.group)
-async def chatbot_toggle(_, message: Message):
-    if not message.from_user or message.from_user.id != CHATBOT_ADMIN_ID:
-        return await message.reply_text("🚫 Only bot owner can control chatbot.")
+async def chatbot_control(_, message: Message):
+    # Check if user is Admin or Owner
+    member = await message.chat.get_member(message.from_user.id)
+    if member.status not in [enums.ChatMemberStatus.OWNER, enums.ChatMemberStatus.ADMINISTRATOR]:
+        return await message.reply_text("✋ Only Admins can control my chat mode.")
 
     if len(message.command) < 2:
-        return await message.reply_text("Usage:\n/chatbot enable\n/chatbot disable")
+        return await message.reply_text("Usage:\n`/chatbot enable`\n`/chatbot disable`")
 
     action = message.command[1].lower()
     chat_id = message.chat.id
 
     if action == "enable":
         CHATBOT_ENABLED_GROUPS.add(chat_id)
-        await message.reply_text("✨ Chatbot enabled in this group.")
-
+        await message.reply_text(f"✨ **{BOT_NAME}** is now active! Say hi.")
     elif action == "disable":
         CHATBOT_ENABLED_GROUPS.discard(chat_id)
-        await message.reply_text("🔕 Chatbot disabled in this group.")
+        await message.reply_text(f"😴 **{BOT_NAME}** is sleeping now.")
 
-# ─── STICKER HANDLER ─────────────────────────────────
-@app.on_message(filters.sticker & ~filters.bot & ~filters.via_bot)
-async def tidal_sticker_reply(_, message: Message):
-    if message.chat.type != ChatType.PRIVATE:
-        if message.chat.id not in CHATBOT_ENABLED_GROUPS:
-            return
-        if not group_trigger(message):
-            return
+# ─── HANDLER: STICKERS ───────────────────────────────
+@app.on_message(filters.sticker & ~filters.bot)
+async def handle_stickers(_, message: Message):
+    if should_reply(message):
+        await message.reply_sticker(random.choice(STICKER_PACK))
 
-    await message.reply_sticker(random.choice(TIDAL_STICKERS))
-
-# ─── TEXT CHAT HANDLER ───────────────────────────────
-@app.on_message(
-    filters.text
-    & ~filters.regex(r"^/")
-    & ~filters.bot
-    & ~filters.via_bot
-)
-async def tidal_chat(bot, message: Message):
-    if not message.from_user:
+# ─── HANDLER: CONVERSATION ───────────────────────────
+@app.on_message(filters.text & ~filters.bot & ~filters.via_bot & ~filters.regex(r"^/"))
+async def handle_conversation(client, message: Message):
+    if not should_reply(message):
         return
 
-    if message.chat.type != ChatType.PRIVATE:
-        if message.chat.id not in CHATBOT_ENABLED_GROUPS:
-            return
-        if not group_trigger(message):
-            return
+    # Cleanup input text
+    user_text = message.text.replace(f"@{BOT_USERNAME}", "").strip()
+    if not user_text:
+        return # Don't reply to empty tags
 
-    text = message.text.strip()
+    # Chat Action (Typing...)
+    await client.send_chat_action(message.chat.id, enums.ChatAction.TYPING)
 
-    clean_text = (
-        text.replace(f"@{BOT_USERNAME}", "")
-            .replace(BOT_NAME, "")
-            .strip()
-    )
-
+    # Update Memory
     uid = message.from_user.id
-    add_memory(uid, "user", clean_text or "hi")
-
-    if len(USER_MEMORY[uid]) == 1:
-        await message.reply_text(time_greeting())
-
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    messages.extend(USER_MEMORY[uid])
+    update_memory(uid, "user", user_text)
 
     try:
-        await bot.send_chat_action(message.chat.id, ChatAction.TYPING)
-
-        res = groq.chat.completions.create(
+        # Generate Response
+        response = groq.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=messages,
-            temperature=0.9,
-            max_tokens=140
+            messages=USER_MEMORY[uid],
+            temperature=0.85, # Slightly lower for more coherence
+            max_tokens=150
         )
+        
+        reply_text = response.choices[0].message.content.strip()
+        
+        # Save AI Response to Memory
+        update_memory(uid, "assistant", reply_text)
+        
+        await message.reply_text(reply_text)
 
-        reply = res.choices[0].message.content.strip()
-        add_memory(uid, "assistant", reply)
-
-        await message.reply_text(reply)
-
-    except Exception:
-        await message.reply_text("thoda hang ho gaya… phir bolna")
+    except Exception as e:
+        print(f"Groq Error: {e}")
+        # Only reply error if it's a direct conversation to avoid spam
+        if message.chat.type == enums.ChatType.PRIVATE:
+            await message.reply_text("Neend aa rahi hai... baad mein baat karte hain (Error)")
