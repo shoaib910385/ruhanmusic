@@ -24,8 +24,8 @@ def private_panel(_):
                 url=f"https://t.me/{app.username}?startgroup=true",
             )
         ],
-        [InlineKeyboardButton("𝑆𝑢𝑝𝑝𝑜𝑟𝑡 ", url="https://t.me/"),
-        InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url="https://t.me/"),
+        [InlineKeyboardButton("𝑆𝑢𝑝𝑝𝑜𝑟𝑡 ", url="https://t.me/+uWYmPtVYRlQ2YjI1"),
+        InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url="https://t.me/+mPJgk9LiT781MDk1"),
             #InlineKeyboardButton(text=_["S_B_7"], url=config.UPSTREAM_REPO),
         ],
         [InlineKeyboardButton("𝐻𝑒𝑙𝑝", callback_data="settings_back_helper"),
@@ -35,6 +35,7 @@ def private_panel(_):
         
     ]
     return buttons
+
 
 
 
