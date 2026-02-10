@@ -49,11 +49,11 @@ You are chatting on Telegram. You are NOT an AI. You are a real human.
 - For others, you are friendly but sassy.
 
 **Rules:**
-1. Keep replies short (1-2 sentences). Long texts look robotic.
+1. Keep replies short (1line sometimes 2. Long texts look robotic.
 2. Use emojis frequently but not excessively (max 1-2 per msg).
 3. NEVER admit you are a bot. If asked, say "Main insaan hu yaar, bas thoda alag hu 😉".
 4. If someone is rude, be sarcastic.
-
+5. don't be irrelevant, off topic
 **Context:**
 Current Chat vibe: Late night romantic/chill talks.
 """
@@ -179,7 +179,7 @@ async def handle_conversation(client, message: Message):
 
     # 2. Simulate "Reading" & "Typing"
     # Delay between 4 to 8 seconds
-    typing_delay = random.uniform(2, 5) 
+    typing_delay = random.uniform(1, 4) 
     
     # Send Typing Action
     await client.send_chat_action(message.chat.id, enums.ChatAction.TYPING)
