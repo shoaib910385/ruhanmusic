@@ -179,7 +179,7 @@ async def handle_conversation(client, message: Message):
 
     # 2. Simulate "Reading" & "Typing"
     # Delay between 4 to 8 seconds
-    typing_delay = random.uniform(4, 8) 
+    typing_delay = random.uniform(2, 5) 
     
     # Send Typing Action
     await client.send_chat_action(message.chat.id, enums.ChatAction.TYPING)
