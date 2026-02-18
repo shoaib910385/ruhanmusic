@@ -25,7 +25,7 @@ def private_panel(_):
             )
         ],
         [InlineKeyboardButton("𝑆𝑢𝑝𝑝𝑜𝑟𝑡 ", url="https://t.me/+n3up-KjYupFlYjNi"),
-        InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url="http://t.me/veloranetwork"),
+        InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url="https://t.me/elyramusicupdate"),
             #InlineKeyboardButton(text=_["S_B_7"], url=config.UPSTREAM_REPO),
         ],
         [InlineKeyboardButton("𝐻𝑒𝑙𝑝", callback_data="settings_back_helper"),
@@ -35,6 +35,7 @@ def private_panel(_):
         
     ]
     return buttons
+
 
 
 
