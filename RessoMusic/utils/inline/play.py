@@ -52,7 +52,7 @@ def stream_markup(_, chat_id):
             InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}"),
             InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}"),
         ],
-        [InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url=f"http://t.me/veloranetwork"),
+        [InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url=f"https://t.me/elyramusicupdate"),
          InlineKeyboardButton("𝑆𝑢𝑝𝑝𝑜𝑟𝑡 ", url=f"https://t.me/+n3up-KjYupFlYjNi"),
 
         ],
