@@ -44,7 +44,7 @@ from strings import get_string
 welcome_db = db.welcome_config 
 
 YUMI_PICS = [
-"https://files.catbox.moe/3dqwe9.jpg"
+"https://files.catbox.moe/q7fi7d.jpg"
 ]
 
 GREET = [
@@ -310,5 +310,6 @@ async def welcome(client, message: Message):
                 await message.stop_propagation()
         except Exception as ex:
             print(ex)
+
 
 
