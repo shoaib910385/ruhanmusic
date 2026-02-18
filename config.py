@@ -32,7 +32,7 @@ HEROKU_API_KEY = getenv("HEROKU_API_KEY")
 
 UPSTREAM_REPO = getenv(
     "UPSTREAM_REPO",
-    "https://github.com/shoaib910385/valrikmusic",
+    "https://github.com/shoaib910385/ruhanmusic",
 )
 UPSTREAM_BRANCH = getenv("UPSTREAM_BRANCH", "main")
 GIT_TOKEN = getenv(
@@ -46,7 +46,7 @@ SUPPORT_GROUP = getenv("SUPPORT_GROUP", "https://t.me/+uWYmPtVYRlQ2YjI1")
 AUTO_LEAVING_ASSISTANT = bool(getenv("AUTO_LEAVING_ASSISTANT", False))
 
 # make your bots privacy from telegra.ph and put your url here 
-PRIVACY_LINK = getenv("PRIVACY_LINK", "https://files.catbox.moe/jyeumn.jpg")
+PRIVACY_LINK = getenv("PRIVACY_LINK", "https://files.catbox.moe/a76h81.jpg")
 
 #Music Api
 
@@ -86,13 +86,13 @@ confirmer = {}
 
 
 START_IMG_URL = getenv(
-    "START_IMG_URL", "https://files.catbox.moe/3dqwe9.jpg"
+    "START_IMG_URL", "https://files.catbox.moe/a76h81.jpg"
 )
 PING_IMG_URL = getenv(
-    "PING_IMG_URL", "https://files.catbox.moe/3dqwe9.jpg"
+    "PING_IMG_URL", "https://files.catbox.moe/a76h81.jpg"
 )
-PLAYLIST_IMG_URL = "https://files.catbox.moe/3dqwe9.jpg"
-STATS_IMG_URL = "https://files.catbox.moe/3dqwe9.jpg"
+PLAYLIST_IMG_URL = "https://files.catbox.moe/a76h81.jpg"
+STATS_IMG_URL = "https://files.catbox.moe/a76h81.jpg"
 TELEGRAM_AUDIO_URL = "https://telegra.ph/file/8234d704952738ebcda7f.jpg"
 TELEGRAM_VIDEO_URL = "https://telegra.ph/file/8d02ff3bde400e465219a.jpg"
 STREAM_IMG_URL = "https://telegra.ph/file/e24f4a5f695ec5576a8f3.jpg"
@@ -122,6 +122,7 @@ if SUPPORT_GROUP:
         raise SystemExit(
             "[ERROR] - Your SUPPORT_GROUP url is wrong. Please ensure that it starts with https://"
         )
+
 
 
 
