@@ -27,10 +27,12 @@ unidecode
 uvloop
 yt-dlp
 youtube-search
+httpx
 py-yt-search
 youtube-search-python
 httpx[http2]==0.27.2
 bs4
+
 
 
 
