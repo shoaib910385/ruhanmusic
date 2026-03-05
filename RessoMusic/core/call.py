@@ -28,9 +28,9 @@ from pytgcalls.types.input_stream import AudioPiped, AudioVideoPiped
 from pytgcalls.types.input_stream.quality import HighQualityAudio, MediumQualityVideo
 from pytgcalls.types.stream import StreamAudioEnded
 import config
-from AMBOTOPMUSIC import LOGGER, YouTube, app
-from AMBOTOPMUSIC.misc import db
-from AMBOTOPMUSIC.utils.database import (
+from RessoMusic import LOGGER, YouTube, app
+from RessoMusic.misc import db
+from RessoMusic.utils.database import (
     add_active_chat,
     add_active_video_chat,
     get_lang,
@@ -42,11 +42,11 @@ from AMBOTOPMUSIC.utils.database import (
     remove_active_video_chat,
     set_loop,
 )
-from AMBOTOPMUSIC.utils.exceptions import AssistantErr
-from AMBOTOPMUSIC.utils.formatters import check_duration, seconds_to_min, speed_converter
-from AMBOTOPMUSIC.utils.inline.play import stream_markup
-from AMBOTOPMUSIC.utils.stream.autoclear import auto_clean
-from AMBOTOPMUSIC.utils.thumbnails import get_thumb
+from RessoMusic.utils.exceptions import AssistantErr
+from RessoMusic.utils.formatters import check_duration, seconds_to_min, speed_converter
+from RessoMusic.utils.inline.play import stream_markup
+from RessoMusic.utils.stream.autoclear import auto_clean
+from RessoMusic.utils.thumbnails import get_thumb
 from strings import get_string
 
 autoend = {}
@@ -608,3 +608,4 @@ class Call(PyTgCalls):
 
 
 AMBOTOP = Call()
+
