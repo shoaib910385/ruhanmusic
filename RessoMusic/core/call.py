@@ -1,8 +1,20 @@
+# -----------------------------------------------
+# 🔸 StrangerMusic Project
+# 🔹 Developed & Maintained by: Shashank AMBOTOP (https://github.com/itzAMBOTOP)
+# 📅 Copyright © 2022 – All Rights Reserved
+#
+# 📖 License:
+# This source code is open for educational and non-commercial use ONLY.
+# You are required to retain this credit in all copies or substantial portions of this file.
+# Commercial use, redistribution, or removal of this notice is strictly prohibited
+# without prior written permission from the author.
+#
+# ❤️ Made with dedication and love by ItzAMBOTOP
+# -----------------------------------------------
 import asyncio
 import os
 from datetime import datetime, timedelta
 from typing import Union
-
 from pyrogram import Client
 from pyrogram.types import InlineKeyboardMarkup
 from pytgcalls import PyTgCalls, StreamType
@@ -15,11 +27,10 @@ from pytgcalls.types import Update
 from pytgcalls.types.input_stream import AudioPiped, AudioVideoPiped
 from pytgcalls.types.input_stream.quality import HighQualityAudio, MediumQualityVideo
 from pytgcalls.types.stream import StreamAudioEnded
-
 import config
-from RessoMusic import LOGGER, YouTube, app
-from RessoMusic.misc import db
-from RessoMusic.utils.database import (
+from AMBOTOPMUSIC import LOGGER, YouTube, app
+from AMBOTOPMUSIC.misc import db
+from AMBOTOPMUSIC.utils.database import (
     add_active_chat,
     add_active_video_chat,
     get_lang,
@@ -31,22 +42,20 @@ from RessoMusic.utils.database import (
     remove_active_video_chat,
     set_loop,
 )
-from RessoMusic.utils.exceptions import AssistantErr
-from RessoMusic.utils.formatters import check_duration, seconds_to_min, speed_converter
-from RessoMusic.utils.inline.play import stream_markup
-from RessoMusic.utils.stream.autoclear import auto_clean
-from RessoMusic.utils.thumbnails import gen_thumb
+from AMBOTOPMUSIC.utils.exceptions import AssistantErr
+from AMBOTOPMUSIC.utils.formatters import check_duration, seconds_to_min, speed_converter
+from AMBOTOPMUSIC.utils.inline.play import stream_markup
+from AMBOTOPMUSIC.utils.stream.autoclear import auto_clean
+from AMBOTOPMUSIC.utils.thumbnails import get_thumb
 from strings import get_string
 
 autoend = {}
 counter = {}
 
-
 async def _clear_(chat_id):
     db[chat_id] = []
     await remove_active_video_chat(chat_id)
     await remove_active_chat(chat_id)
-
 
 class Call(PyTgCalls):
     def __init__(self):
@@ -271,14 +280,14 @@ class Call(PyTgCalls):
         await assistant.change_stream(chat_id, stream)
 
     async def stream_call(self, link):
-        assistant = await group_assistant(self, config.LOG_GROUP_ID)
+        assistant = await group_assistant(self, config.LOGGER_ID)
         await assistant.join_group_call(
-            config.LOG_GROUP_ID,
+            config.LOGGER_ID,
             AudioVideoPiped(link),
             stream_type=StreamType().pulse_stream,
         )
         await asyncio.sleep(0.2)
-        await assistant.leave_group_call(config.LOG_GROUP_ID)
+        await assistant.leave_group_call(config.LOGGER_ID)
 
     async def join_call(
         self,
@@ -391,7 +400,7 @@ class Call(PyTgCalls):
                         original_chat_id,
                         text=_["call_6"],
                     )
-                img = await gen_thumb(videoid)
+                img = await get_thumb(videoid)
                 button = stream_markup(_, chat_id)
                 run = await app.send_photo(
                     chat_id=original_chat_id,
@@ -437,7 +446,7 @@ class Call(PyTgCalls):
                         original_chat_id,
                         text=_["call_6"],
                     )
-                img = await gen_thumb(videoid)
+                img = await get_thumb(videoid)
                 button = stream_markup(_, chat_id)
                 await mystic.delete()
                 run = await app.send_photo(
@@ -506,7 +515,7 @@ class Call(PyTgCalls):
                         if str(streamtype) == "audio"
                         else config.TELEGRAM_VIDEO_URL,
                         caption=_["stream_1"].format(
-                            config.SUPPORT_GROUP, title[:23], check[0]["dur"], user
+                            config.SUPPORT_CHAT, title[:23], check[0]["dur"], user
                         ),
                         reply_markup=InlineKeyboardMarkup(button),
                     )
@@ -518,14 +527,14 @@ class Call(PyTgCalls):
                         chat_id=original_chat_id,
                         photo=config.SOUNCLOUD_IMG_URL,
                         caption=_["stream_1"].format(
-                            config.SUPPORT_GROUP, title[:23], check[0]["dur"], user
+                            config.SUPPORT_CHAT, title[:23], check[0]["dur"], user
                         ),
                         reply_markup=InlineKeyboardMarkup(button),
                     )
                     db[chat_id][0]["mystic"] = run
                     db[chat_id][0]["markup"] = "tg"
                 else:
-                    img = await gen_thumb(videoid)
+                    img = await get_thumb(videoid)
                     button = stream_markup(_, chat_id)
                     run = await app.send_photo(
                         chat_id=original_chat_id,
