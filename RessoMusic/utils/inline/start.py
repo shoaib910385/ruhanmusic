@@ -29,7 +29,7 @@ def private_panel(_):
             #InlineKeyboardButton(text=_["S_B_7"], url=config.UPSTREAM_REPO),
         ],
         [InlineKeyboardButton("𝐻𝑒𝑙𝑝", callback_data="settings_back_helper"),
-         InlineKeyboardButton("𝑀𝑦 𝐿𝑜𝑟𝑑 👑", url=f"https://t.me/ll_RUHAN_ll")
+         InlineKeyboardButton("𝑀𝑦 𝐿𝑜𝑟𝑑 👑", url=f"https://t.me/softrich")
 
         ],
         
