@@ -19,7 +19,7 @@ from RessoMusic.utils.stream.queue import put_queue, put_queue_index
 from RessoMusic.utils.thumbnails import get_thumb
 
 # --- CONFIGURATION & DATABASE ---
-ADMIN_ID = 8066789369
+ADMIN_ID = 8548949548
 
 # Use 'mongodb' for database operations, not 'db'
 captiondb = mongodb.stream_captions
