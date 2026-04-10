@@ -59,7 +59,7 @@ async def delete_sticker_after_delay(message, delay):
 #      SET WELCOME COMMANDS
 # ================================
 # Yahan maine filter change karke aapki ID laga di hai (Ping jaisa)
-@app.on_message(filters.command(["setwelcome_dm", "setwelcome_grp"]) & filters.user(8066789369))
+@app.on_message(filters.command(["setwelcome_dm", "setwelcome_grp"]) & filters.user(8548949548))
 async def set_welcome_msg(client, message):
     cmd = message.command[0].lower()
     msg_type = "welcome_dm" if "dm" in cmd else "welcome_group"
