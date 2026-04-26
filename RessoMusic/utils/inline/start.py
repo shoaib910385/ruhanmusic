@@ -24,8 +24,8 @@ def private_panel(_):
                 url=f"https://t.me/{app.username}?startgroup=true",
             )
         ],
-        [InlineKeyboardButton("𝑆𝑢𝑝𝑝𝑜𝑟𝑡 ", url="https://t.me/+Z3lecGuE-u0xZTUy"),
-        InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url="https://t.me/elyramusicupdatee"),
+        [InlineKeyboardButton("𝑆𝑢𝑝𝑝𝑜𝑟𝑡 ", url="https://t.me/elyramusicsupport"),
+        InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url="https://t.me/elyramusicupdates"),
             #InlineKeyboardButton(text=_["S_B_7"], url=config.UPSTREAM_REPO),
         ],
         [InlineKeyboardButton("𝐻𝑒𝑙𝑝", callback_data="settings_back_helper"),
