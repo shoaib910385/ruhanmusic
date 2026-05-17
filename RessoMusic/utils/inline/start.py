@@ -24,12 +24,12 @@ def private_panel(_):
                 url=f"https://t.me/{app.username}?startgroup=true",
             )
         ],
-        [InlineKeyboardButton("𝑆𝑢𝑝𝑝𝑜𝑟𝑡 ", url="https://t.me/elyramusicsupport"),
-        InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url="https://t.me/elyramusicupdates"),
+        [InlineKeyboardButton("𝑆𝑢𝑝𝑝𝑜𝑟𝑡 ", url="https://t.me/+Tcb0XXZ1FwcxNTIy"),
+        InlineKeyboardButton("𝑈𝑝𝑑𝑎𝑡𝑒𝑠", url="https://t.me/elyramusic_update"),
             #InlineKeyboardButton(text=_["S_B_7"], url=config.UPSTREAM_REPO),
         ],
         [InlineKeyboardButton("𝐻𝑒𝑙𝑝", callback_data="settings_back_helper"),
-         InlineKeyboardButton("𝑀𝑦 𝐿𝑜𝑟𝑑 👑", url=f"https://t.me/lustybillionaire")
+         InlineKeyboardButton("𝑀𝑦 𝐿𝑜𝑟𝑑 👑", url=f"https://t.me/riskybanner")
 
         ],
         
